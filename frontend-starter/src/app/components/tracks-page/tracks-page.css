@@ -1,1 +1,43 @@
 :host { display: block; }
+
+.track-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.track-card {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #e1ebe7;
+  border-radius: 12px;
+}
+
+.track-card h3,
+.track-card p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.track-card small {
+  color: #61756f;
+}
+
+.track-card button {
+  justify-self: start;
+}
+
+.pager {
+  flex-wrap: wrap;
+}
+
+.success {
+  color: #176b42;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #276c57;
+  outline-offset: 2px;
+}
