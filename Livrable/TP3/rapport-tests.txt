@@ -1,0 +1,17 @@
+Rapport des tests - TP3
+
+Tests frontend (dans track.service.spec.ts)
+
+1. Pagination
+Résultat attendu : la requête GET envoie la page et la limite demandées.
+Résultat observé : page=2 et limit=10 sont bien envoyés. Test réussi.
+
+2. Upload
+Résultat attendu : l'upload envoie audio et title en FormData et reçoit la progression.
+Résultat observé : les champs et les événements de progression sont vérifiés. Test réussi.
+
+3. Suppression
+Résultat attendu : le service envoie DELETE /api/tracks/track-1.
+Résultat observé : la requête DELETE est bien envoyée. Test réussi.
+
+

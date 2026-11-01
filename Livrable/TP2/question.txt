@@ -1,0 +1,29 @@
+- Le backend envoie-t-il le fichier entier en mémoire ou peut-il
+l’envoyer progressivement depuis le disque ?
+
+Le backend peut envoyer le fichier progressivement depuis le disque.
+
+- Avec `HttpClient` et `responseType: "blob"`, à quel moment le composant reçoit-il
+généralement le fichier ?
+
+Le composant reçoit le Blob quand le téléchargement du fichier est terminé.
+
+- Si la bibliothèque contient 100 morceaux, les 100 fichiers audio sont-ils chargés en
+mémoire dès l'affichage de la liste ? Justifier la réponse à partir du code.
+
+Non, la liste charge seulement les informations des morceaux. Le fichier audio sera demandé
+lorsque que l'on clique sur « Lire ».
+
+- Quelle différence y aurait-il avec 100 éléments `<audio>` utilisant directement
+une URL HTTP ?
+
+Le navigateur pourrait commencer à charger plusieurs fichiers audio, selon ses réglages,
+cela pourrait donc créer plus de requêtes réseau.
+
+- Pourquoi l'URL créée par `URL.createObjectURL` doit-elle être révoquée ?
+
+Il faut la révoquer quand on ne l’utilise plus pour libérer les ressources.
+
+- Explication du choix `Blob` et `ObjectURL` :
+
+Le Blob contient le fichier audio reçu. L’ObjectURL permet de le lire dans le lecteur audio.

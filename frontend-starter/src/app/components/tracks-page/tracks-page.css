@@ -36,6 +36,18 @@
   color: #176b42;
 }
 
+progress {
+  display: block;
+  width: 100%;
+  margin: 0.75rem 0;
+  accent-color: #1d755e;
+}
+
+.delete-button {
+  color: #fff;
+  background: #9b3434;
+}
+
 button:focus-visible,
 input:focus-visible {
   outline: 3px solid #276c57;

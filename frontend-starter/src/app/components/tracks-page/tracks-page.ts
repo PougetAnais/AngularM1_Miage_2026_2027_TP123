@@ -1,17 +1,20 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnDestroy, signal } from '@angular/core';
+import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Track } from '../../shared/models/track.model';
 import { TrackService } from '../../shared/services/track.service';
 import { apiErrorMessage } from '../../shared/utils/api-error-message';
 
 @Component({
-  imports: [DatePipe, ReactiveFormsModule],
+  imports: [DatePipe, MatSnackBarModule, ReactiveFormsModule],
   templateUrl: './tracks-page.html',
   styleUrl: './tracks-page.css',
 })
 export class TracksPageComponent implements OnDestroy {
   private readonly service = inject(TrackService);
+  private readonly snackBar = inject(MatSnackBar);
   private fileInput?: HTMLInputElement;
 
   readonly tracks = signal<Track[]>([]);
@@ -21,8 +24,10 @@ export class TracksPageComponent implements OnDestroy {
   readonly audioUrl = signal('');
   readonly error = signal('');
   readonly uploading = signal(false);
+  readonly uploadProgress = signal(0);
   readonly uploadError = signal('');
   readonly uploadSuccess = signal('');
+  readonly deletingTrackId = signal<string | null>(null);
   readonly nowPlaying = signal<Track | null>(null);
   readonly audioLoading = signal(false);
   readonly audioError = signal('');
@@ -47,6 +52,11 @@ export class TracksPageComponent implements OnDestroy {
     this.service.list(this.page()).subscribe({
       next: (response) => {
         console.debug('[TracksPage] Pistes chargées', response.items.length);
+        if (this.page() > response.pages) {
+          this.page.set(response.pages);
+          this.load();
+          return;
+        }
         this.tracks.set(response.items);
         this.pages.set(response.pages);
         this.loading.set(false);
@@ -82,23 +92,64 @@ export class TracksPageComponent implements OnDestroy {
     }
 
     this.uploading.set(true);
+    this.uploadProgress.set(0);
     this.uploadError.set('');
     this.uploadSuccess.set('');
     this.service.upload(this.file, this.title.value || this.file.name).subscribe({
-      next: (track) => {
-        console.debug('[TracksPage] Piste envoyée', track.id);
-        this.uploading.set(false);
-        this.uploadSuccess.set('La piste a été envoyée avec succès.');
-        this.title.setValue('');
-        this.file = undefined;
-        if (this.fileInput) this.fileInput.value = '';
-        this.page.set(1);
-        this.load();
+      next: (event) => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          this.uploadProgress.set(Math.round((event.loaded / event.total) * 100));
+        }
+
+        if (event.type === HttpEventType.Response) {
+          if (!event.body) {
+            this.uploading.set(false);
+            this.uploadError.set("L'envoi est terminé, mais le serveur n'a pas renvoyé la piste.");
+            return;
+          }
+
+          console.debug('[TracksPage] Piste envoyée', event.body.id);
+          this.uploadProgress.set(100);
+          this.uploading.set(false);
+          this.uploadSuccess.set('La piste a été envoyée avec succès.');
+          this.title.setValue('');
+          this.file = undefined;
+          if (this.fileInput) this.fileInput.value = '';
+          this.page.set(1);
+          this.load();
+        }
       },
       error: (error) => {
         console.error('[TracksPage] Envoi impossible', error);
         this.uploadError.set(apiErrorMessage(error, "Impossible d'envoyer la piste."));
         this.uploading.set(false);
+      },
+    });
+  }
+
+  delete(track: Track): void {
+    if (this.deletingTrackId() || !window.confirm(`Supprimer « ${track.title} » ?`)) {
+      return;
+    }
+
+    this.deletingTrackId.set(track.id);
+    this.service.delete(track.id).subscribe({
+      next: () => {
+        this.deletingTrackId.set(null);
+        this.showNotification('La piste a été supprimée.', 'success');
+        if (this.tracks().length === 1 && this.page() > 1) {
+          this.page.set(this.page() - 1);
+        }
+        this.load();
+      },
+      error: (error: unknown) => {
+        this.deletingTrackId.set(null);
+        const message =
+          error instanceof HttpErrorResponse && error.status === 404
+            ? "Cette piste n'existe plus ou ne vous appartient pas. La liste a été actualisée."
+            : apiErrorMessage(error, 'Impossible de supprimer cette piste.');
+        this.showNotification(message, 'error');
+        this.load();
       },
     });
   }
@@ -136,6 +187,14 @@ export class TracksPageComponent implements OnDestroy {
   ngOnDestroy(): void {
     const audioUrl = this.audioUrl();
     if (audioUrl) URL.revokeObjectURL(audioUrl);
+  }
+
+  private showNotification(message: string, type: 'success' | 'error'): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration: 4000,
+      panelClass: type === 'error' ? 'snackbar-error' : 'snackbar-success',
+      politeness: type === 'error' ? 'assertive' : 'polite',
+    });
   }
 
   private validateFile(file: File): string {

@@ -1,0 +1,28 @@
+- courte explication de la différence entre Signal et `localStorage` :
+
+Le Signal, est une variable réactive dans Angular : 
+elle garde l'information dans sa RAM pendant que l'application tourne, 
+mais dès qu'on quitte la page ou on y revient, tout est effacé.
+
+Le localStorage, elle, stocke les info dans le navigateur de façon permanente
+elle garde les données même si on ferme l'onglet ou le navigateur,
+utiliser notamment pour le token de connexion de l'utilisateur.
+
+
+schéma annoté du flux de connexion :
+
+Utilisateur clique sur « Se connecter »
+        ->
+LoginPageComponent (formulaire)
+        ->
+AuthService.login() envoie POST /api/auth/login avec les identifiants donné dans le formulaire
+        ->
+HttpClient -> proxy Angular (localhost:4200) -> API Express (localhost:3000)
+        ->
+Backend : recherche l'utilisateur dans MongoDB et vérifie le mot de passe
+        ->
+Si les identifiants sont valides : réponse HTTP 200 avec { token, user }
+        ->
+AuthService sauvegarde le token dans localStorage et met à jour le Signal currentUser
+        ->
+Redirection vers /tracks

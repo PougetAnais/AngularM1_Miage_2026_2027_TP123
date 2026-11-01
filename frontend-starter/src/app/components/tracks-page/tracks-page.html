@@ -9,19 +9,24 @@
     <article class="card">
       <h2>Importer</h2>
       <label for="track-title">Titre</label>
-      <input id="track-title" [formControl]="title" />
+      <input id="track-title" [formControl]="title" [disabled]="uploading()" />
       <label for="track-file">Fichier audio</label>
       <input
         id="track-file"
         type="file"
         accept=".mp3,.wav,.ogg,.m4a,audio/mpeg,audio/wav,audio/x-wav,audio/ogg,audio/mp4,audio/x-m4a"
         (change)="choose($event)"
+        [disabled]="uploading()"
       />
       @if (uploadError()) {
         <p class="error" role="alert">{{ uploadError() }}</p>
       }
       @if (uploadSuccess()) {
         <p class="success" role="status">{{ uploadSuccess() }}</p>
+      }
+      @if (uploading()) {
+        <p role="status">Envoi en cours : {{ uploadProgress() }} %</p>
+        <progress [value]="uploadProgress()" max="100" aria-label="Progression de l'envoi"></progress>
       }
       <button type="button" (click)="upload()" [disabled]="!file || uploading()">
         {{ uploading() ? 'Envoi…' : 'Envoyer' }}
@@ -55,6 +60,14 @@
                 [attr.aria-label]="'Lire ' + track.title"
               >
                 {{ audioLoading() ? 'Chargement…' : 'Lire' }}
+              </button>
+              <button
+                type="button"
+                class="delete-button"
+                (click)="delete(track)"
+                [disabled]="deletingTrackId() !== null"
+              >
+                {{ deletingTrackId() === track.id ? 'Suppression…' : 'Supprimer' }}
               </button>
             </article>
           } @empty {

@@ -1,62 +1,113 @@
-# Guitar Practice Cloud — package étudiant
+# Guitar Practice Cloud
 
-Ce dépôt contient uniquement les ressources nécessaires aux trois TP :
-`backend/` et `frontend-starter/`, ainsi que les sujets et documents utiles.
+Application de bibliothèque audio avec un frontend Angular et une API Node.js/Express.
 
 ## Prérequis
 
-- Node.js 22 ou plus récent ;
-- un compte MongoDB Atlas par binôme ;
-- Git et un navigateur récent.
-- Un IDE de qualité
-- Recommandé : un abonnement à un 
+- Node.js `24.15` ou plus récent (ou `22.22.3` ou plus récent) ;
+- npm ;
+- une base MongoDB Atlas accessible depuis votre adresse IP.
 
-Consulter [ATLAS_SETUP.md](ATLAS_SETUP.md) pour créer la base de données.
+Le projet a été vérifié avec Node.js `24.21.0` et npm `11.19.0`.
 
-## Démarrer le backend
+## 1. Configurer et démarrer le backend
+
+Dans un premier terminal, depuis la racine du dépôt :
 
 ```bash
 cd backend
+```
+
+Créer le fichier local `backend/.env` à partir du modèle. Dans Git Bash :
+
+```bash
 cp .env.example .env
 ```
 
-Renseigner dans `.env` l’URI MongoDB Atlas et le secret JWT. Ne jamais publier
-ce fichier ni copier un secret dans le code Angular.
+Dans PowerShell :
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Modifier `backend/.env` avec votre URI MongoDB et un secret JWT local. Le fichier
+contient des informations privées : ne les publiez pas et ne les copiez pas dans
+Angular. Le port par défaut est `3000`.
+
+Installer les dépendances et lancer l'API :
 
 ```bash
-npm install
+npm ci
 npm start
 ```
 
-Le backend écoute normalement sur `http://localhost:3000`.
+Si PowerShell bloque la commande `npm`, utilisez `npm.cmd` à la place, par exemple
+`npm.cmd ci` puis `npm.cmd start`.
 
-## Démarrer le frontend
+Quand le backend démarre correctement, vérifier :
 
-Dans un autre terminal :
+```text
+http://localhost:3000/api/health
+```
+
+La réponse attendue est `{"status":"ok"}`. Le backend se connecte à MongoDB avant
+de démarrer. Il prépare également un compte de démonstration :
+`demo@example.com` / `Demo1234!`.
+
+## 2. Démarrer le frontend
+
+Laisser le backend ouvert et ouvrir un deuxième terminal depuis la racine du dépôt :
 
 ```bash
 cd frontend-starter
-npm install
+npm ci
 npm start
 ```
 
-Ouvrir `http://localhost:4200`. Le compte de démonstration est
-`demo@example.com` / `Demo1234!`.
+Sous PowerShell, utiliser `npm.cmd` si nécessaire :
 
-## Documents de travail
+```powershell
+npm.cmd ci
+npm.cmd start
+```
 
-- [SUJET_ETUDIANT_TP1.md](SUJET_ETUDIANT_TP1.md), [SUJET_ETUDIANT_TP2.md](SUJET_ETUDIANT_TP2.md) et [SUJET_ETUDIANT_TP3.md](SUJET_ETUDIANT_TP3.md) : missions des trois séances ;
-- [API_CONTRACT.md](API_CONTRACT.md) : endpoints, authentification et formats échangés ;
-- [RAPPORT_IA_MODELE.md](RAPPORT_IA_MODELE.md) : modèle de compte rendu.
-- [CONSEILS_POUR_UTIISER_ASSISTANT_AI.md](CONSEILS_POUR_UTIISER_ASSISTANT_AI.md) : utiliser correctement un assistant IA, quel que soit l’outil choisi.
+Ouvrir ensuite `http://localhost:4200`. Le fichier
+`frontend-starter/proxy.conf.json` transmet les requêtes `/api` à
+`http://localhost:3000` ; il n'est normalement pas nécessaire de modifier cette
+configuration.
 
-Le backend contient également ses propres consignes pour les assistants :
-[`backend/AGENTS.md`](backend/AGENTS.md), [`backend/CLAUDE.md`](backend/CLAUDE.md),
-[`backend/GEMINI.md`](backend/GEMINI.md) et
-[`backend/best-practices.md`](backend/best-practices.md). Elles couvrent
-Node.js, Express, Mongoose, MongoDB, l’authentification, Multer, les uploads,
-les logs et les tests.
+## Tests et build
 
-Les fichiers audio présents dans `frontend-starter/fichiers-audio-de-test/` sont
-des fixtures fournies pour les essais. Aucun fichier uploadé, dossier de
-dépendances (`node_modules`), fichier `.env` ou identifiant local n’est inclus.
+Depuis `frontend-starter` :
+
+```bash
+npm test
+npm run build
+```
+
+Depuis `backend` :
+
+```bash
+npm test
+```
+
+## Architecture
+
+```text
+Navigateur
+   |
+   v
+Frontend Angular (localhost:4200)
+   | composants -> services -> HttpClient
+   | intercepteur : ajoute le JWT aux requêtes protégées
+   v
+Proxy Angular (/api)
+   |
+   v
+API Express (localhost:3000)
+   | routes, authentification et validation
+   +----> MongoDB : utilisateurs et informations des pistes
+   +----> backend/data/uploads : fichiers audio
+```
+
+

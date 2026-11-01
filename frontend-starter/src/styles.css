@@ -28,6 +28,11 @@ button:disabled { opacity: 0.45; }
 audio { width: 100%; }
 .error { color: #a33; }
 
+.snackbar-success .mdc-snackbar__surface { background: #176b42; }
+.snackbar-error .mdc-snackbar__surface { background: #9b3434; }
+.snackbar-success .mat-mdc-snack-bar-label,
+.snackbar-error .mat-mdc-snack-bar-label { color: white; }
+
 @media (max-width: 720px) {
   header, .grid { display: block; }
   nav { margin-top: 1rem; }
